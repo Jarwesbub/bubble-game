@@ -1,6 +1,9 @@
 import 'dart:math';
 
+import 'package:bubble_game/domain/entities/player.dart';
 import 'package:bubble_game/presentation/controllers/auth_controller.dart';
+import 'package:bubble_game/presentation/models/bubble_ui.dart';
+import 'package:bubble_game/presentation/models/player_ui.dart';
 import 'package:bubble_game/presentation/widgets/bubble_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,22 +11,27 @@ import 'package:get/get.dart';
 enum BubbleColorType { red, blue, green, yellow }
 
 class GameController extends AuthController {
-  static const int bubbleRows = 6;
-  static const int maxBubbles = 11;
-  List<RxList<BubbleWidget>> bubbles = [];
+  static const int lanesCount = 6;
+  static const int maxBubbles = 11; // Max bubbles per lane.
+  late final Player _player;
+  late final PlayerUI playerUI;
+
+  List<RxList<BubbleUI>> bubbles = [];
 
   GameController() {
-    bubbles = RxList.generate(bubbleRows, (_) {
+    bubbles = RxList.generate(lanesCount, (_) {
       // Init bubble matrix.
-      return RxList<BubbleWidget>();
+      return RxList<BubbleUI>();
     });
   }
 
   @override
   Future<void> onInit() async {
     super.onInit();
+    _player = Player(lane: 0);
+    playerUI = PlayerUI(_player);
     // Create bubble rows for testing.
-    for (int i = 0; i < bubbleRows; i++) {
+    for (int i = 0; i < lanesCount; i++) {
       final count = Random().nextInt(4) + 2;
       bubbles[i].addAll(await _generateTestBubbles(count));
     }
@@ -35,16 +43,17 @@ class GameController extends AuthController {
     super.dispose();
   }
 
-  Future<RxList<BubbleWidget>> _generateTestBubbles(int count) async {
+  Future<RxList<BubbleUI>> _generateTestBubbles(int count) async {
     final bubbleList = RxList.generate(count, (index) {
       final rand = Random().nextInt(BubbleColorType.values.length);
       final type = BubbleColorType.values[rand];
-      return _getBubbleByType(type);
+      final widget = _getBubbleWidgetByType(type);
+      return BubbleUI(type: type, widget: widget);
     });
     return bubbleList;
   }
 
-  BubbleWidget _getBubbleByType(BubbleColorType type) {
+  BubbleWidget _getBubbleWidgetByType(BubbleColorType type) {
     final color = switch (type) {
       BubbleColorType.red => Colors.red,
       BubbleColorType.blue => Colors.blue,
@@ -54,17 +63,28 @@ class GameController extends AuthController {
     return BubbleWidget(color: color);
   }
 
-  void onButtonPressTest() {
+  void onPlayerThrow() {
     // Random row number.
-    final row = Random().nextInt(bubbleRows);
+    final lane = _player.lane;
 
-    if (bubbles[row].length >= maxBubbles) {
-      print('Max bubbles reached in a row $row');
+    if (bubbles[lane].length >= maxBubbles) {
+      print('Max bubbles reached in a row $lane');
       return;
     }
     // Choose random color type.
     final rand = Random().nextInt(BubbleColorType.values.length);
     final type = BubbleColorType.values[rand];
-    bubbles[row].add(_getBubbleByType(type));
+    final widget = _getBubbleWidgetByType(type);
+    bubbles[lane].add(BubbleUI(type: type, widget: widget));
+  }
+
+  void onMoveLeft() {
+    _player.moveLeft();
+    playerUI.syncFromDomain();
+  }
+
+  void onMoveRight() {
+    _player.moveRight(lanesCount);
+    playerUI.syncFromDomain();
   }
 }

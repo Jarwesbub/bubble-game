@@ -20,7 +20,7 @@ class GamePage extends GetView<GameController> {
                   border: Border.all(color: Colors.black),
                   color: Colors.black12,
                 ),
-                child: Stack(children: [_bubbleRow()]),
+                child: Stack(children: [_topView()]),
               ),
             ),
             AspectRatio(
@@ -32,16 +32,18 @@ class GamePage extends GetView<GameController> {
                       border: Border.all(color: Colors.black),
                       color: Colors.black26,
                     ),
-                    child: _playerRow(),
-                  ),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: controller.onButtonPressTest,
-                      child: Text('Test'),
-                    ),
+                    child: _bottomView(),
                   ),
                 ],
               ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _moveLeftTestButton(),
+                _throwButton(),
+                _moveRightTestButton(),
+              ],
             ),
           ],
         ),
@@ -49,8 +51,10 @@ class GamePage extends GetView<GameController> {
     );
   }
 
-  Widget _bubbleRow() {
+  // All the bubbles.
+  Widget _topView() {
     final length = controller.bubbles.length;
+    // Create bubble rows that contains columns (matrix).
     return Row(
       children: List.generate(length, (index) {
         return Expanded(child: _bubbleColumn(index));
@@ -71,19 +75,47 @@ class GamePage extends GetView<GameController> {
           itemCount: controller.bubbles[rowIndex].length,
           itemBuilder: (context, columnIndex) {
             final bubble = controller.bubbles[rowIndex][columnIndex];
-            return AspectRatio(aspectRatio: 1, child: bubble);
+            return AspectRatio(aspectRatio: 1, child: bubble.widget);
           },
         ),
       );
     });
   }
 
-  Widget _playerRow() {
-    final length = controller.bubbles.length;
+  Widget _bottomView() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columnCount = controller.bubbles.length;
+        final columnWidth = constraints.maxWidth / columnCount;
+
+        return Stack(
+          children: [_backgroundGrid(columnCount), _player(columnWidth)],
+        );
+      },
+    );
+  }
+
+  Widget _throwButton() {
+    return ElevatedButton(
+      onPressed: controller.onPlayerThrow,
+      child: Text('Throw'),
+    );
+  }
+
+  Widget _moveLeftTestButton() {
+    return ElevatedButton(onPressed: controller.onMoveLeft, child: Text('<'));
+  }
+
+  Widget _moveRightTestButton() {
+    return ElevatedButton(onPressed: controller.onMoveRight, child: Text('>'));
+  }
+
+  Widget _backgroundGrid(int length) {
     return Row(
       children: List.generate(length, (_) {
         return Expanded(
           child: Container(
+            height: double.infinity,
             decoration: BoxDecoration(
               border: Border.all(color: Colors.black45, width: 0.5),
               color: Colors.black12,
@@ -92,5 +124,23 @@ class GamePage extends GetView<GameController> {
         );
       }),
     );
+  }
+
+  Widget _player(double columnWidth) {
+    controller.playerUI.size.value = columnWidth;
+    return Obx(() {
+      final left =
+          controller.playerUI.lane * columnWidth +
+          columnWidth / 2 -
+          controller.playerUI.size / 2;
+
+      return AnimatedPositioned(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        bottom: 0,
+        left: left,
+        child: controller.playerUI.widget,
+      );
+    });
   }
 }
