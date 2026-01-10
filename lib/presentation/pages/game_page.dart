@@ -1,4 +1,5 @@
 import 'package:bubble_game/presentation/controllers/game_controller.dart';
+import 'package:bubble_game/presentation/widgets/bubble_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -75,7 +76,11 @@ class GamePage extends GetView<GameController> {
           itemCount: controller.bubbles[rowIndex].length,
           itemBuilder: (context, columnIndex) {
             final bubble = controller.bubbles[rowIndex][columnIndex];
-            return AspectRatio(aspectRatio: 1, child: bubble.widget);
+            final widget = BubbleWidget(
+              colorType: bubble.colorType,
+              type: bubble.type,
+            );
+            return AspectRatio(aspectRatio: 1, child: widget);
           },
         ),
       );
@@ -139,7 +144,18 @@ class GamePage extends GetView<GameController> {
         curve: Curves.easeOut,
         bottom: 0,
         left: left,
-        child: controller.playerUI.widget,
+        child: Column(
+          children: [
+            ...List.generate(controller.playerUI.bubbles.length, (index) {
+              final bubble = controller.playerUI.bubbles[index];
+              return BubbleWidget(
+                colorType: bubble.colorType,
+                type: bubble.type,
+              );
+            }),
+            controller.playerUI.build(),
+          ],
+        ),
       );
     });
   }

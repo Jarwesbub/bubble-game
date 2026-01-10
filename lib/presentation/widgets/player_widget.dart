@@ -7,13 +7,17 @@ class PlayerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size.value,
-      height: size.value,
-      decoration: BoxDecoration(
-        color: Colors.deepPurple,
-        borderRadius: BorderRadius.circular(5),
-      ),
+    return Column(
+      children: [
+        Container(
+          width: size.value,
+          height: size.value,
+          decoration: BoxDecoration(
+            color: Colors.deepPurple,
+            borderRadius: BorderRadius.circular(5),
+          ),
+        ),
+      ],
     );
   }
 }
